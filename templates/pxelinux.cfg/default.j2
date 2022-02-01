@@ -1,0 +1,14 @@
+default menu.c32
+prompt 0
+timeout 600
+
+label bootstrapinstall
+  menu label Install bootstrap.{{host.data.cluster_name}}.{{host.data.cluster_domain}}
+  kernel images/fcos/{{kernel_image}}
+  append initrd=images/fcos/{{initramfs_image}} coreos.live.rootfs_url=http://{{host.data.pxe_server_ip}}/fcos/{{rootfs_image}} coreos.inst.install_dev={{host.data.install_device}} coreos.inst.ignition_url=http://{{host.data.pxe_server_ip}}/ignition/{{host.data.cluster_name}}/bootstrap.ign ip={{host.data.bootstrap_ip}}::{{host.data.bootstrap_gw}}:{{host.data.bootstrap_snm}}:bootstrap.{{host.data.cluster_name}}.{{host.data.cluster_domain}}::none nameserver={{host.data.nameserver_1}} nameserver={{host.data.nameserver_2}}
+ipappend 2
+
+label local
+  menu label Boot from ^local drive
+  menu default
+  localboot 0xffff

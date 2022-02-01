@@ -1,0 +1,25 @@
+ssh_user = 'tkcadmin'
+sudo = True
+use_sudo_password = False
+
+# Cluster Config
+cluster_name = 'okd01'
+cluster_domain = 'tkclabs.io'
+nameserver_1 = '100.64.10.10'
+nameserver_2 = '100.64.10.11'
+pxe_server_ip = '100.64.10.79'
+
+# PXE Images
+kernel_image = 'fedora-coreos-34.20210626.3.1-live-kernel-x86_64'
+initramfs_image = 'fedora-coreos-34.20210626.3.1-live-initramfs.x86_64.img'
+rootfs_image = 'fedora-coreos-34.20210626.3.1-live-rootfs.x86_64.img'
+
+# PerNode Info
+bootstrap_ip = '100.64.10.78'
+bootstrap_gw = '100.64.10.1'
+bootstrap_snm = '255.255.255.0'
+install_device = '/dev/vda'
+
+# Other
+okd_ssh_key = ''
+okd_pull_secret = ''
