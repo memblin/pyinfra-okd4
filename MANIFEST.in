@@ -1,0 +1,2 @@
+include pyinfra_okd4/files/*
+include pyinfra_okd4/templates/*

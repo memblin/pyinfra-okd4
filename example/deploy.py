@@ -1,13 +1,22 @@
 from pyinfra import inventory, state
-
 from pyinfra_okd4 import (
-    get_repos(),
-    make_directories(),
+    configure_firewall,
+    copy_syslinux_files,
+    create_directories,
+    deploy_nginx_config,
+    download_okd4_installer,
+    enable_services,
+    install_package_repos,
+    install_packages,
 )
 
-SUDO = True
-FAIL_PERCENT = 0
 
 # Run Deploys
-get_repos()
-make_directories()
+install_package_repos()
+install_packages()
+create_directories()
+copy_syslinux_files()
+deploy_nginx_config()
+configure_firewall()
+enable_services()
+download_okd4_installer()

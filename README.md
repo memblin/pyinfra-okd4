@@ -11,5 +11,9 @@ This module contains deploys to configure the required services on a standalone 
 
 - Not ready for use yet, still a work in progress
 
+- Migrating to packaged format
+
 - Deploy will not complete without a valid SSH key and PullSecret in `group_data/all.py` but you shouldn't commit your pull secret to the repo
+
+- Deploy for downloading okd installer fails poorly if Internet is unavailable.
 

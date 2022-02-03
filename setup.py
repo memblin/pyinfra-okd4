@@ -7,4 +7,6 @@ if __name__ == "__main__":
         name="pyinfra-okd4",
         packages=find_packages(),
         install_requires=("pyinfra",),
+        package_data={"pyinfra_okd4": ["files/*", "templates/*"]},
+        include_package_date=True,
     )
