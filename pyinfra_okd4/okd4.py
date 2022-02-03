@@ -6,10 +6,12 @@ from pyinfra.facts.server import LinuxDistribution, Command, Which
 from pyinfra.facts.files import Directory, File, FindInFile, Md5File, Sha256File
 from pyinfra.operations import files, server
 
+
 distro = host.get_fact(LinuxDistribution)
 
+
 # CentOS 7 or Earlier will need epel-release installed for nginx
-if distro.get('name') == 'CentOS' and distro.get('major') <= 7:
+if .get('name') == 'CentOS' and distro.get('major') <= 7:
     server.packages(
             name = 'Install epel-release repo',
             packages = ['epel-release'],

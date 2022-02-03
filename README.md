@@ -1,12 +1,15 @@
 # pyinfra-okd4
-Configure OKD4 Installation Utility / PXE Helper
 
-- Install pyinfra, I use a conda env or py3 venv
+## Configure [OKD4](https://www.okd.io/) Provisioning Server using [pyinfra](https://pyinfra.com/).
 
-- Copy `group_data/all.py.example` to `group_data/all.py` and adjust the values
+A [User Provisioned Baremetal Install via PXE Boot for OKD4](https://docs.okd.io/latest/installing/installing_bare_metal/installing-bare-metal.html) requires
+TFTP, HTTP, and Load Balancer services be configured and available
 
-- Deploy will not coplete without a valid SSH key and PullSecret in `group_data/all.py` but you shouldn't commit your pull secret to the repo
+This module contains deploys to configure the required services on a standalone provisioning server allowing deployment of PXE booted Ignition configured OKD4 clusters.
 
-- Update `inventories.py` to point at the host you want to configure.
-  - I imagnie normal use-cases this would be a single node, the repo has 3 because I'm testing against CentOS7, Alma8, and Fedora
+## Usage
+
+- Not ready for use yet, still a work in progress
+
+- Deploy will not complete without a valid SSH key and PullSecret in `group_data/all.py` but you shouldn't commit your pull secret to the repo
 

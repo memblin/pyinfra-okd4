@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Custom
-group_data/all.py
+example/group_data/all.py
