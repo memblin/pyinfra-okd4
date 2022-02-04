@@ -9,6 +9,8 @@ from .provisioner import (
     enable_services,
     install_package_repos,
     install_packages,
+    render_okd4_dns_records,
+    render_okd4_haproxy_cfg,
     render_okd4_install_config,
     render_pxelinux_cfgs,
 )

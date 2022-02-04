@@ -1,0 +1,27 @@
+# Forward DNS
+
+## OKD Nodes
+okdutil           IN A    100.64.10.60
+osmaster001.okd01 IN A    100.64.10.61
+osmaster002.okd01 IN A    100.64.10.62
+osmaster003.okd01 IN A    100.64.10.63
+osnode001.okd01   IN A    100.64.10.64
+osnode002.okd01   IN A    100.64.10.65
+osnode003.okd01   IN A    100.64.10.66
+bootstrap.okd01   IN A    100.64.10.69
+
+## Cluster VIP DNS pointing at haproxy
+api.okd01         IN A    100.64.10.15
+api-int.okd01     IN A    100.64.10.15
+*.apps.okd01      IN A    100.64.10.15
+okd01             IN A    100.64.10.15
+
+# Reverse DNS Records
+60      IN      PTR     okdutils.okd01.tkclabs.io.
+61      IN      PTR     osmaster001.okd01.tkclabs.io.
+62      IN      PTR     osmaster002.okd01.tkclabs.io.
+63      IN      PTR     osmaster003.okd01.tkclabs.io.
+64      IN      PTR     osnode001.okd01.tkclabs.io.
+65      IN      PTR     osnode002.okd01.tkclabs.io.
+66      IN      PTR     osnode003.okd01.tkclabs.io.
+69      IN      PTR     bootstrap.okd01.tkclabs.io.

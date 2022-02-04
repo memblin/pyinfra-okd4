@@ -11,7 +11,7 @@ This module contains deploys to configure the required services on a standalone 
 
 - Not ready for use yet, still a work in progress
 
-- Migrating to packaged format
+- Something wrong in the ordering between download_okd4_installer() and download_fcos_pxe_images() download_fcos tries to fire before downloading the installer
 
 - Deploy will not complete without a valid SSH key and PullSecret in `group_data/all.py` but you shouldn't commit your pull secret to the repo
 

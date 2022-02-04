@@ -1,4 +1,5 @@
 import json
+import logging
 import requests
 
 from os import path
@@ -8,6 +9,8 @@ from pyinfra.facts.files import Directory, File, FindInFile, Md5File, Sha256File
 from pyinfra.facts.server import LinuxDistribution, Command, Which
 from pyinfra.operations import files, server
 
+
+logging.basicConfig(level=logging.INFO)
 
 # Handful of Helpers
 def get_package_path(*paths):
@@ -61,7 +64,6 @@ def create_directories(state=None, host=None):
         "AlmaLinux",
         "CentOS",
     ]:
-
         # Create directories owned by the ssh_user
         okd_cluster_config_dir = (
             host.data.cluster_name + "." + host.data.cluster_domain + "-config"
@@ -340,6 +342,33 @@ def render_pxelinux_cfgs(
     )
 
 
+@deploy("Render OKD4 DNS records.")
+def render_okd4_dns_records(state=None, host=None):
+    # Render DNS records necesary for OKD4 function
+    # and drop them in the ssh_user home dir.
+    files.template(
+            name="Render OKD4 DNS records.",
+            src=get_templates_path("okd4_dns.records.j2"),
+            dest=f"okd4_dns.records",
+            mode="0644",
+            state=state,
+            host=host,
+            )
+
+@deploy("Render OKD4 Provisioner haproxy.cfg")
+def render_okd4_haproxy_cfg(state=None, host=None):
+    # Render HAProxy configuration to bring OKD4 Cluster online
+    files.template(
+            name="Render OKD4 Provisioner haproxy.cfg",
+            src=get_templates_path("haproxy.cfg.j2"),
+            dest="/etc/haproxy/haproxy.cfg",
+            mode="0644",
+            user="root",
+            group="root",
+            state=state,
+            host=host,
+            )
+
 @deploy("Render OKD4 install-config.yaml")
 def render_okd4_install_config(state=None, host=None):
     # Render install-config.yaml
@@ -354,7 +383,6 @@ def render_okd4_install_config(state=None, host=None):
             state=state,
             host=host,
         )
-
 
 @deploy("Create OKD4 Cluster Ignition Files")
 def create_okd4_ignition_files(state=None, host=None):

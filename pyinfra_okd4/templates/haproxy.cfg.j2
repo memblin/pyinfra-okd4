@@ -1,0 +1,78 @@
+global
+  log         127.0.0.1 local2
+  pidfile     /var/run/haproxy.pid
+  maxconn     4000
+  daemon
+
+defaults
+  mode                    http
+  log                     global
+  option                  dontlognull
+  option http-server-close
+  option                  redispatch
+  retries                 3
+  timeout http-request    10s
+  timeout queue           1m
+  timeout connect         10s
+  timeout client          1m
+  timeout server          1m
+  timeout http-keep-alive 10s
+  timeout check           10s
+  maxconn                 3000
+
+frontend stats
+  bind *:8081
+  mode            http
+  log             global
+  maxconn 10
+  stats enable
+  stats hide-version
+  stats refresh 30s
+  stats show-node
+  stats show-desc Stats for HAProxy
+  stats auth haproxy:haproxy
+  stats uri /
+
+listen api-server-6443 
+  bind *:6443
+  mode tcp
+  option httpchk GET /readyz
+  server bootstrap bootstrap.okd01.tkclabs.io:6443 check check-ssl verify none backup
+  server osmaster001 osmaster001.okd01.tkclabs.io:6443 check check-ssl verify none
+  server osmaster002 osmaster002.okd01.tkclabs.io:6443 check check-ssl verify none
+  server osmaster003 osmaster003.okd01.tkclabs.io:6443 check check-ssl verify none
+
+listen machine-config-server-22623 
+  bind *:22623
+  mode tcp
+  server bootstrap bootstrap.okd01.tkclabs.io:22623 check backup
+  server osmaster001 osmaster001.okd01.tkclabs.io:22623 check
+  server osmaster002 osmaster002.okd01.tkclabs.io:22623 check
+  server osmaster003 osmaster003.okd01.tkclabs.io:22623 check
+
+listen ingress-router-443 
+  bind *:443
+  mode tcp
+  balance source
+  option allbackups
+  server osnode001 osnode001.okd01.tkclabs.io:443 check
+  server osnode002 osnode002.okd01.tkclabs.io:443 check
+  server osnode003 osnode003.okd01.tkclabs.io:443 check
+ 
+listen ingress-router-80 
+  bind *:80
+  mode tcp
+  balance source
+  option allbackups
+  server osnode001 osnode001.okd01.tkclabs.io:80 check
+  server osnode002 osnode002.okd01.tkclabs.io:80 check
+  server osnode003 osnode003.okd01.tkclabs.io:80 check
+
+# From the docs, didn't see it used during provisining
+listen ingress-router-1936
+  bind *:1936
+  mode tcp
+  balance source
+  server osnode001 osnode001.okd01.tkclabs.io:1936 check
+  server osnode002 osnode002.okd01.tkclabs.io:1936 check
+  server osnode003 osnode003.okd01.tkclabs.io:1936 check
