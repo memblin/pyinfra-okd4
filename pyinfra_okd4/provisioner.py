@@ -221,32 +221,158 @@ def download_okd4_installer(state=None, host=None):
     # Download Latest OKD Installer
     #
     # Get the build tag or the latest release on GitHub
-    release = requests.head('https://github.com/openshift/okd/releases/latest')
+    release = requests.head("https://github.com/openshift/okd/releases/latest")
 
-    latest_build_tag = release.headers.get('location').split('/')[-1]
+    latest_build_tag = release.headers.get("location").split("/")[-1]
 
-    client_file = f'openshift-client-linux-{latest_build_tag}.tar.gz'
-    install_file = f'openshift-install-linux-{latest_build_tag}.tar.gz'
+    client_file = f"openshift-client-linux-{latest_build_tag}.tar.gz"
+    install_file = f"openshift-install-linux-{latest_build_tag}.tar.gz"
 
-    client_url = f'https://github.com/openshift/okd/releases/download/{latest_build_tag}/{client_file}'
-    install_url = f'https://github.com/openshift/okd/releases/download/{latest_build_tag}/{install_file}'
+    client_url = f"https://github.com/openshift/okd/releases/download/{latest_build_tag}/{client_file}"
+    install_url = f"https://github.com/openshift/okd/releases/download/{latest_build_tag}/{install_file}"
 
     # Download the Latest OKD OpenShift Installer if it's not already on the path.
     for url in [client_url, install_url]:
         if not host.get_fact(File, f'Downloads/{url.split("/")[-1]}'):
             files.download(
-                    name=f'Downloading {url.split("/")[-1]}',
-                    src=url,
-                    dest=f'Downloads/{url.split("/")[-1]}',
-                    sudo=False,
-                    state=state,
-                    host=host,
-        )
+                name=f'Downloading {url.split("/")[-1]}',
+                src=url,
+                dest=f'Downloads/{url.split("/")[-1]}',
+                sudo=False,
+                state=state,
+                host=host,
+            )
 
     # Extract the tar.gz files to ~/bin
-    if not host.get_fact(File, 'bin/openshift-install'):
-        server.shell(commands=f'tar -xzf Downloads/{install_file} --directory bin', sudo=False, state=state, host=host)
-    
-    if not host.get_fact(File, 'bin/oc') and not host.get_fact(File, 'bin/kubectl'):
-        server.shell(commands=f'tar -xzf Downloads/{client_file} --directory bin', sudo=False, state=state, host=host)
+    if not host.get_fact(File, "bin/openshift-install"):
+        server.shell(
+            commands=f"tar -xzf Downloads/{install_file} --directory bin",
+            sudo=False,
+            state=state,
+            host=host,
+        )
 
+    if not host.get_fact(File, "bin/oc") and not host.get_fact(File, "bin/kubectl"):
+        server.shell(
+            commands=f"tar -xzf Downloads/{client_file} --directory bin",
+            sudo=False,
+            state=state,
+            host=host,
+        )
+
+
+@deploy("Download FCOS PXE Images referenced in OKD Installer")
+def download_fcos_pxe_images(state=None, host=None):
+
+    # Parse the CoreOS stream metadata for the bootimages
+    if host.get_fact(File, "bin/openshift-install"):
+        coreos_stream_metadata = json.loads(
+            host.get_fact(
+                Command, "bin/openshift-install coreos print-stream-json", sudo=False
+            )
+        )
+        pxe_metadata = (
+            coreos_stream_metadata.get("architectures")
+            .get("x86_64")
+            .get("artifacts")
+            .get("metal")
+            .get("formats")
+            .get("pxe")
+        )
+        kernel = pxe_metadata.get("kernel")
+        initramfs = pxe_metadata.get("initramfs")
+        rootfs = pxe_metadata.get("rootfs")
+
+        # Parse out the filenames
+        kernel_image = kernel.get("location").split("/")[-1]
+        initramfs_image = initramfs.get("location").split("/")[-1]
+        rootfs_image = rootfs.get("location").split("/")[-1]
+
+        # Download the FCOS PXE Files that match this OKD Build
+        if not host.get_fact(File, f"/var/lib/tftpboot/images/fcos/{kernel_image}"):
+            files.download(
+                name=f"Downloading {kernel_image}",
+                src=kernel.get("location"),
+                dest=f"/var/lib/tftpboot/images/fcos/{kernel_image}",
+                sudo=True,
+                state=state,
+                host=host,
+            )
+        if not host.get_fact(File, f"/var/lib/tftpboot/images/fcos/{initramfs_image}"):
+            files.download(
+                name=f"Downloading {initramfs_image}",
+                src=initramfs.get("location"),
+                dest=f"/var/lib/tftpboot/images/fcos/{initramfs_image}",
+                sudo=True,
+                state=state,
+                host=host,
+            )
+        if not host.get_fact(File, f"/user/share/nginx/html/fcos/{rootfs_image}"):
+            files.download(
+                name=f"Downloading {rootfs_image}",
+                src=rootfs.get("location"),
+                dest=f"/usr/share/nginx/html/fcos/{rootfs_image}",
+                sudo=True,
+                state=state,
+                host=host,
+            )
+
+        return (kernel_image, initramfs_image, rootfs_image)
+
+
+@deploy("Render pxelinux.cfg Files")
+def render_pxelinux_cfgs(
+    state=None, host=None, kernel_image=None, initramfs_image=None, rootfs_image=None
+):
+    # Render /var/lib/tftboot/pxelinux.cfg/~ files
+    files.template(
+        name="Render pxelinux.cfg/default file",
+        src=get_templates_path("pxelinux.cfg/default.j2"),
+        dest="/var/lib/tftpboot/pxelinux.cfg/default",
+        mode="0644",
+        user="root",
+        group="root",
+        kernel_image=kernel_image,
+        initramfs_image=initramfs_image,
+        rootfs_image=rootfs_image,
+        state=state,
+        host=host,
+    )
+
+
+@deploy("Render OKD4 install-config.yaml")
+def render_okd4_install_config(state=None, host=None):
+    # Render install-config.yaml
+    ignition_dir = host.data.cluster_name + "." + host.data.cluster_domain + "-config"
+    if not host.get_fact(File, f"{ignition_dir}-config/bootstrap.ign"):
+        files.template(
+            name="Render install-config.yaml file",
+            src=get_templates_path("install-config.yaml.j2"),
+            dest=f"{ignition_dir}/install-config.yaml",
+            mode="0644",
+            sudo=False,
+            state=state,
+            host=host,
+        )
+
+
+@deploy("Create OKD4 Cluster Ignition Files")
+def create_okd4_ignition_files(state=None, host=None):
+    # Run openshift-install to create Cluster Ignition files
+    ignition_dir = host.data.cluster_name + "." + host.data.cluster_domain
+    if host.get_fact(File, f"{ignition_dir}-config/install-config.yaml"):
+        if not host.get_fact(File, f"{ignition_dir}-config/bootstrap.ign"):
+            server.shell(
+                name="Create OpenShift OKD Manifests",
+                commands=f"bin/openshift-install create manifests --dir {ignition_dir}-config",
+                sudo=False,
+                state=state,
+                host=host,
+            )
+            server.shell(
+                name="Create OpenShift OKD Ignition Files",
+                commands=f"bin/openshift-install create ignition-configs --dir {ignition_dir}-config",
+                sudo=False,
+                state=state,
+                host=host,
+            )
